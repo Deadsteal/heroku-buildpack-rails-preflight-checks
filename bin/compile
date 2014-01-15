@@ -1,0 +1,28 @@
+ERRORED=false
+
+function error(){
+  echo -n '       '
+  echo $@ >&2
+  ERRORED=true
+}
+
+echo "-----> Running Rails pre-flight checks"
+
+cd $1
+
+if [ x${DATABASE_URL}x == xx ]
+then
+  error "Can't find DATABASE_URL - try enabling the user-env-compile labs feature (heroku labs:enable user-env-compile)"
+fi
+
+PATH=$PATH:bin RAILS_ENV=production bundle exec rails runner 'true'
+if [ $? -ne 0 ]
+then
+  error "App failed to start in production environment."
+fi
+
+if [ ${ERRORED} == true ]
+then
+  error "ABORTING DEPLOY"
+  exit 1
+fi
